@@ -1,17 +1,31 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"auth/internal/handlers"
 	"log"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
+
 	//Настройка маршрутизатора Gin
 	router := gin.Default()
 
-	//
-	router.GET("/", func(c *gin.Context) {
-		c.String(200, "Hello!")
+	// Создаем хендлер
+	authHandler := handlers.NewAuthHandler()
+
+	// Группа маршрутов аутентификации
+	authGroup := router.Group("/auth")
+	{
+		// Инициализация входа
+		authGroup.POST("/login", authHandler.InitiateLoginHandler)
+	}
+
+	// Health check
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
 	})
 
 	log.Println("Starting server on port 8081")
