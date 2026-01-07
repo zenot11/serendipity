@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	ServerPort string
+	JWTSecret  string
 
 	// Время жизни
 	LoginTokenTTL   time.Duration // 5 минут
@@ -17,7 +18,7 @@ type Config struct {
 	AuthCodeTTL     time.Duration // 1 минута
 
 	// Cleanup
-	CleanupInterval time.Duration // 1 минута
+	CleanupInterval time.Duration // 5 минут
 }
 
 func Load() *Config {
@@ -25,6 +26,7 @@ func Load() *Config {
 
 	return &Config{
 		ServerPort: getEnv("SERVER_PORT", "8081"),
+		JWTSecret:  getEnv("JWT_SECRET", "super-secret-key-change-in-production"),
 
 		LoginTokenTTL:   5 * time.Minute,    // 5 минут
 		AccessTokenTTL:  1 * time.Minute,    // 1 минута
