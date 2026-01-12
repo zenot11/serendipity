@@ -19,18 +19,15 @@ func NewMemoryStore() *MemoryStore {
 	}
 }
 
-func (s *MemoryStore) CreateLoginState(token string, expiresAt time.Time) models.LoginState {
+func (s *MemoryStore) CreateLoginState(token string, expiresAt time.Time) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	state := models.LoginState{
+	s.loginStates[token] = models.LoginState{
 		Token:     token,
 		Status:    "pending",
 		ExpiresAt: expiresAt,
 	}
-
-	s.loginStates[token] = state
-	return state
 }
 
 func (s *MemoryStore) GetLoginState(token string) (models.LoginState, bool) {
@@ -38,15 +35,24 @@ func (s *MemoryStore) GetLoginState(token string) (models.LoginState, bool) {
 	defer s.mu.RUnlock()
 
 	state, exists := s.loginStates[token]
-	if !exists {
-		return models.LoginState{}, false
-	}
-
-	return state, true
+	return state, exists
 }
-
-func (s *MemoryStore) DeleteLoginState(token string) {
+func (s *MemoryStore) UpdateLoginState(token string, status string, accessToken string, refreshToken string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	delete(s.loginStates, token)
+
+	state, exists := s.loginStates[token]
+	if !exists {
+		return false
+	}
+	state.Status = status
+	if accessToken != "" {
+		state.AccessToken = accessToken
+	}
+	if refreshToken != "" {
+		state.RefreshToken = refreshToken
+	}
+
+	s.loginStates[token] = state
+	return true
 }

@@ -38,3 +38,8 @@ func (m *LoginStateManager) GetLoginState(token string) (models.LoginState, bool
 
 	return state, true
 }
+
+// Обновляем состояние входа
+func (m *LoginStateManager) UpdateLoginState(token, status, accessToken, refreshToken string) {
+	m.store.UpdateLoginState(token, status, accessToken, refreshToken)
+}

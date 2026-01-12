@@ -1,7 +1,7 @@
 package services
 
 import (
-	"auth/internal/storage"
+	"auth/internal/database/storage"
 	"crypto/rand"
 	"fmt"
 	"math/big"
