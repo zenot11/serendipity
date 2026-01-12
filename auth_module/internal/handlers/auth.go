@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"auth/internal/database/repository"
 	"auth/internal/models"
 	"net/http"
 
@@ -8,7 +9,7 @@ import (
 )
 
 type AuthHandler struct {
-	// Сервисы будут добавлены позже
+	loginStateMgr *repository.LoginStateManager
 }
 
 func NewAuthHandler() *AuthHandler {
@@ -23,6 +24,9 @@ func (h *AuthHandler) InitiateLoginHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, models.ErrorResponse{Error: "Invalid request format"})
 		return
 	}
+	// Создаем состояние входа
+	h.loginStateMgr.CreateLoginState(req.LoginToken)
+
 	// Временная заглушка
 	switch req.Type {
 	case "github", "yandex", "code":
