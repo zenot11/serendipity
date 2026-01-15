@@ -15,11 +15,7 @@ type OAuthHandler struct {
 	mongoRepo     *storage.MongoRepository
 }
 
-func NewOAuthHandler(
-	oauthService *oauth.OAuthService,
-	loginStateMgr *repository.LoginStateManager,
-	mongoRepo *storage.MongoRepository,
-) *OAuthHandler {
+func NewOAuthHandler(oauthService *oauth.OAuthService, loginStateMgr *storage.MongoRepository, mongoRepo *repository.LoginStateManager) *OAuthHandler {
 	return &OAuthHandler{
 		oauthService:  oauthService,
 		loginStateMgr: loginStateMgr,
@@ -55,8 +51,6 @@ func (h *OAuthHandler) handleOAuthCallback(c *gin.Context, provider string) {
 		//
 		return
 	}
-
-	//
 
 	// Возвращаем страницу успеха
 	c.Redirect(http.StatusFound, "/")

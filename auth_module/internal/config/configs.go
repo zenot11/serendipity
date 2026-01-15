@@ -10,6 +10,7 @@ import (
 type Config struct {
 	ServerPort string
 	JWTSecret  string
+	MongoDBURI string
 
 	// Время жизни
 	LoginTokenTTL   time.Duration // 5 минут
@@ -37,14 +38,15 @@ func Load() *Config {
 	return &Config{
 		ServerPort: getEnv("SERVER_PORT", "8081"),
 		JWTSecret:  getEnv("JWT_SECRET", "super-secret-key-change-in-production"),
+		MongoDBURI: getEnv("MONGODB_URI", "mongodb://localhost:27020/auth_service"),
 
 		GitHubClientID:     getEnv("GITHUB_CLIENT_ID", ""),
 		GitHubClientSecret: getEnv("GITHUB_CLIENT_SECRET", ""),
-		GitHubRedirectURL:  getEnv("GITHUB_REDIRECT_URL", "http://localhost:8081/auth/github/callback"),
+		GitHubRedirectURL:  getEnv("GITHUB_REDIRECT_URL", "https://nonapprehensive-unlionised-elsy.ngrok-free.dev/auth/github/callback"),
 
 		YandexClientID:     getEnv("YANDEX_CLIENT_ID", ""),
 		YandexClientSecret: getEnv("YANDEX_CLIENT_SECRET", ""),
-		YandexRedirectURL:  getEnv("YANDEX_REDIRECT_URL", "http://localhost:8081/auth/yandex/callback"),
+		YandexRedirectURL:  getEnv("YANDEX_REDIRECT_URL", "https://nonapprehensive-unlionised-elsy.ngrok-free.dev/auth/yandex/callback"),
 
 		LoginTokenTTL:   5 * time.Minute,    // 5 минут
 		AccessTokenTTL:  1 * time.Minute,    // 1 минута
