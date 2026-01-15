@@ -1,3 +1,14 @@
 # macOS system files
 .DS_Store
 **/.DS_Store
+# Build artifacts
+*.o
+telegram_bot
+
+# Optional: binaries
+*.out
+*.exe
+
+# Optional: build directories
+build/
+
