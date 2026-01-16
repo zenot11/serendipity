@@ -9,5 +9,18 @@
     <h1>Результаты</h1>
     <p>Добро пожаловать :3, {{.Role}}!</p>
     <a href="/logout">Выйти</a>
+
+    <h2>Доступные тесты</h2>
+    <form action="/result" method="post">
+        <label>Выберите тест:</label>
+        <select name="test">
+            <option value="math">Математика</option>
+            <option value="physics">Физика</option>
+        </select>
+        <br><br>
+        <button type="submit">Пройти тест</button>
+    </form>
+    <p>{{.Message}}</p>
+    <a href="/logout">Выйти</a>
 </body>
 </html>
