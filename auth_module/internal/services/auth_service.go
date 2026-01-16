@@ -2,9 +2,9 @@ package services
 
 import (
 	"auth/internal/database/storage"
-	"crypto/rand"
+
 	"fmt"
-	"math/big"
+	"math/rand/v2"
 	"time"
 )
 
@@ -22,22 +22,19 @@ func NewCodeAuthService(store *storage.MemoryStore, codeTTL time.Duration) *Code
 
 // GenerateCode генерирует 6-значный код
 func (s *CodeAuthService) GenerateCode(loginToken string) string {
-	code := s.generateRandomCode(6)
-
-	//Позже сохранение в хранилище
+	code := fmt.Sprintf("%06d", rand.IntN(900000)+100000)
+	expiresAt := time.Now().Add(s.codeTTL)
+	s.store.CreateAuthCode(code, loginToken, expiresAt)
 	return code
 }
 
-// GenerateRandomCode генерирует случайный цифровой код
-func (s *CodeAuthService) generateRandomCode(length int) string {
-	code := ""
-	for i := 0; i < length; i++ {
-		n, err := rand.Int(rand.Reader, big.NewInt(10))
-		if err != nil {
-			code += fmt.Sprintf("%d", i%10)
-		} else {
-			code += fmt.Sprintf("%d", n)
-		}
+// ValidateCode проверяет код
+func (s *CodeAuthService) ValidateCode(code string) (string, bool) {
+	authCode, exists := s.store.GetAuthCode(code)
+	if !exists || time.Now().After(authCode.ExpiresAt) {
+		return "", false
 	}
-	return code
+
+	s.store.DeleteAuthCode(code)
+	return authCode.LoginToken, true
 }
