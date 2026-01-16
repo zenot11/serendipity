@@ -10,10 +10,10 @@
 
     <p>Выберите способ входа (ваша роль):</p>
 
-    <div class="buttons">
-        <button>студент</button>
-        <button>преподаватель</button>
-        <button>администратор</button>
-    </div>
+    <form action="/login" method="post">
+        <button type="submit" name="role" value="студент">студент</button>
+        <button type="submit" name="role" value="преподаватель">преподаватель</button>
+        <button type="submit" name="role" value="администратор">администратор</button>
+    </form>
 </body>
 </html>

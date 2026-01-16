@@ -4,9 +4,13 @@ import (
  	"log"
 )
 
-func SendLogin(email string, password string) bool {
- 	log.Println("Send login to backend:", email)
+func SendLogin(role string) bool {
+ 	log.Println("Попытка входа с ролью:", role)
 
-	
- 	return true
+	switch role {
+	case "студент", "преподаватель", "администратор":
+		return true
+	default:
+		return false
+	}
 }
