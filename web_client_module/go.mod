@@ -1,4 +1,4 @@
-module web-client
+module web_client_module
 
 go 1.25.3
 

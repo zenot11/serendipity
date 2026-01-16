@@ -6,7 +6,7 @@ import (
  	"net/http"
  	"path/filepath"
 
- 	"web-client_module/internal/handlers"
+ 	"web_client_module/internal/handlers"
 )
 
 func main() {
