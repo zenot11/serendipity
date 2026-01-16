@@ -1,26 +1,33 @@
 package main
 
 import (
+ 	"html/template"
  	"log"
  	"net/http"
+ 	"path/filepath"
 
- 	"web-client/internal/handlers"
+ 	"web-client_module/internal/handlers"
 )
 
 func main() {
- 	mux := http.NewServeMux()
+ 	templatesPath := filepath.Join("templates", "*.html")
+ 	tmpl, err := template.ParseGlob(templatesPath)
+ 	if err != nil {
+  		log.Fatal("Ошибка загрузки шаблонов:", err)
+ 	}
 
- 	mux.HandleFunc("/login", handlers.LoginPage)
- 	mux.HandleFunc("/tests", handlers.TestsPage)
- 	mux.HandleFunc("/result", handlers.ResultPage)
+	h := handlers.NewHandler(tmpl)
 
- 	fs := http.FileServer(http.Dir("./static"))
- 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+ 	http.HandleFunc("/", h.Index)
+ 	http.HandleFunc("/login", h.Login)
+ 	http.HandleFunc("/logout", h.Logout)
 
- 	log.Println("Server started on http://localhost:8080")
+ 	fs := http.FileServer(http.Dir("static"))
+ 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
- 	err := http.ListenAndServe(":8080", mux)
- 		if err != nil {
-  		log.Fatal(err)
+ 	log.Println("Web-client запущен на http://localhost:8080")
+ 	err = http.ListenAndServe(":8080", nil)
+ 	if err != nil {
+  		log.Fatal("Ошибка запуска сервера:", err)
  	}
 }

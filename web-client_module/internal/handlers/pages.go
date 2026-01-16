@@ -2,36 +2,51 @@ package handlers
 
 import (
  	"html/template"
- 	"log"
  	"net/http"
+
+ 	"github.com/google/uuid"
 )
 
-func LoginPage(w http.ResponseWriter, r *http.Request) {
-	log.Println("Open login page")
-	tmpl, err := template.ParseFiles("templates/login.html")
- 	if err != nil {
-  		http.Error(w, "Template error", http.StatusInternalServerError)
-  		return
- 	}
- 	tmpl.Execute(w, nil)
+type Handler struct {
+ 	Templates *template.Template
 }
 
-func TestsPage(w http.ResponseWriter, r *http.Request) {
- 	log.Println("Open tests page")
- 	tmpl, err := template.ParseFiles("templates/tests.html")
- 	if err != nil {
-  		http.Error(w, "Template error", http.StatusInternalServerError)
-  		return
+// обработчк
+func NewHandler(t *template.Template) *Handler {
+ 	return &Handler{
+  		Templates: t,
  	}
-	tmpl.Execute(w, nil)
 }
 
-func ResultPage(w http.ResponseWriter, r *http.Request) {
- 	log.Println("Open result page")
- 	tmpl, err := template.ParseFiles("templates/result.html")
+// главная страница
+func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
+ 	// проверяем cookie 
+ 	_, err := r.Cookie("session_id")
  	if err != nil {
-  		http.Error(w, "Template error", http.StatusInternalServerError)
-  		return
+ 		sessionID := uuid.New().String()
+  		http.SetCookie(w, &http.Cookie{
+   			Name:     "session_id",
+   			Value:    sessionID,
+   			Path:     "/",
+   			HttpOnly: true,
+  		})
+	}
+
+ 	err = h.Templates.ExecuteTemplate(w, "login.html", nil)
+ 	if err != nil {
+  		http.Error(w, "Ошибка отображения страницы", http.StatusInternalServerError)
  	}
- 	tmpl.Execute(w, nil)
+}
+
+// страница логина
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+ 	err := h.Templates.ExecuteTemplate(w, "login.html", nil)
+ 	if err != nil {
+  		http.Error(w, "Ошибка отображения страницы", http.StatusInternalServerError)
+ 	}
+}
+
+// выход !!!заглушка!!!
+func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
+ 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
