@@ -114,3 +114,25 @@ func (s *JWTService) ValidateRefreshToken(tokenString string) (string, error) {
 
 	return email, nil
 }
+
+// GenerateTokenPair создает пару токенов
+func (s *JWTService) GenerateTokenPair(user *models.User, permissions []string) (*models.TokenPair, error) {
+	// Access Token - только permissions
+	accessToken, err := s.generateAccessToken(permissions)
+	if err != nil {
+		return nil, err
+	}
+
+	// Refresh Token - только email
+	refreshToken, err := s.generateRefreshToken(user.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.TokenPair{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		TokenType:    "Bearer",
+		ExpiresIn:    int(s.accessTokenTTL.Seconds()),
+	}, nil
+}
