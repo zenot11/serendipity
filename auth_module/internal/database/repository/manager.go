@@ -18,28 +18,22 @@ func NewLoginStateManager(store *storage.MemoryStore, ttl time.Duration) *LoginS
 	}
 }
 
-// CreateLoginState создаем новое состояние входа
+// CreateLoginState создаёт новое состояние входа
 func (m *LoginStateManager) CreateLoginState(token string) {
 	expiresAt := time.Now().Add(m.ttl)
 	m.store.CreateLoginState(token, expiresAt)
 }
 
-// GetLoginState получаем состояние входа
-func (m *LoginStateManager) GetLoginState(token string) (models.LoginState, bool) {
+// GetFullLoginState получает состояние входа
+func (m *LoginStateManager) GetFullLoginState(token string) (models.LoginState, bool) {
 	state, exists := m.store.GetLoginState(token)
-	if !exists {
+	if !exists || time.Now().After(state.ExpiresAt) {
 		return models.LoginState{}, false
 	}
-
-	// Проверяем срок действия
-	if time.Now().After(state.ExpiresAt) {
-		return models.LoginState{}, false
-	}
-
 	return state, true
 }
 
-// Обновляем состояние входа
+// UpdateLoginState обновляет состояние входа
 func (m *LoginStateManager) UpdateLoginState(token, status, accessToken, refreshToken string) {
 	m.store.UpdateLoginState(token, status, accessToken, refreshToken)
 }
