@@ -37,6 +37,7 @@ type RefreshRequest struct {
 
 type LogoutRequest struct {
 	RefreshToken string `json:"refresh_token" form:"refresh_token" binding:"required"`
+	All          bool   `json:"all" form:"all"`
 }
 
 type CheckLoginRequest struct {
@@ -48,6 +49,7 @@ type LoginStatusResponse struct {
 	AccessToken  string `json:"access_token,omitempty"`
 	RefreshToken string `json:"refresh_token,omitempty"`
 }
+
 type SuccessResponse struct {
 	Message string `json:"message"`
 }

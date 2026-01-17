@@ -56,3 +56,49 @@ func (s *MemoryStore) UpdateLoginState(token string, status string, accessToken 
 	s.loginStates[token] = state
 	return true
 }
+
+func (s *MemoryStore) CreateAuthCode(code, loginToken string, expiresAt time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.authCodes[code] = models.AuthCode{
+		Code:       code,
+		LoginToken: loginToken,
+		ExpiresAt:  expiresAt,
+	}
+}
+
+func (s *MemoryStore) GetAuthCode(code string) (models.AuthCode, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	authCode, exists := s.authCodes[code]
+	return authCode, exists
+}
+
+func (s *MemoryStore) DeleteAuthCode(code string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.authCodes, code)
+}
+
+func (s *MemoryStore) Cleanup() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	now := time.Now()
+
+	// Очистка просроченных состояний входа
+	for token, state := range s.loginStates {
+		if now.After(state.ExpiresAt) {
+			delete(s.loginStates, token)
+		}
+	}
+
+	// Очистка просроченных кодов
+	for code, authCode := range s.authCodes {
+		if now.After(authCode.ExpiresAt) {
+			delete(s.authCodes, code)
+		}
+	}
+}
