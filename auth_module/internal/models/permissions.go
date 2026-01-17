@@ -3,8 +3,45 @@ package models
 type Permission string
 
 const (
-	PermissionUserListRead Permission = "user:list:read"
-	// Остальные константы будут добавлены позже
+	// User permissions
+	PermissionUserListRead      Permission = "user:list:read"
+	PermissionUserFullNameWrite Permission = "user:fullName:write"
+	PermissionUserDataRead      Permission = "user:data:read"
+	PermissionUserRolesRead     Permission = "user:roles:read"
+	PermissionUserRolesWrite    Permission = "user:roles:write"
+	PermissionUserBlockRead     Permission = "user:block:read"
+	PermissionUserBlockWrite    Permission = "user:block:write"
+
+	// Course permissions
+	PermissionCourseInfoWrite Permission = "course:info:write"
+	PermissionCourseTestList  Permission = "course:testList"
+	PermissionCourseTestRead  Permission = "course:test:read"
+	PermissionCourseTestWrite Permission = "course:test:write"
+	PermissionCourseTestAdd   Permission = "course:test:add"
+	PermissionCourseTestDel   Permission = "course:test:del"
+	PermissionCourseUserList  Permission = "course:userList"
+	PermissionCourseUserAdd   Permission = "course:user:add"
+	PermissionCourseUserDel   Permission = "course:user:del"
+	PermissionCourseAdd       Permission = "course:add"
+	PermissionCourseDel       Permission = "course:del"
+
+	// Question permissions
+	PermissionQuestListRead Permission = "quest:list:read"
+	PermissionQuestRead     Permission = "quest:read"
+	PermissionQuestUpdate   Permission = "quest:update"
+	PermissionQuestCreate   Permission = "quest:create"
+	PermissionQuestDel      Permission = "quest:del"
+
+	// Test permissions
+	PermissionTestQuestDel    Permission = "test:quest:del"
+	PermissionTestQuestAdd    Permission = "test:quest:add"
+	PermissionTestQuestUpdate Permission = "test:quest:update"
+	PermissionTestAnswerRead  Permission = "test:answer:read"
+
+	// Answer permissions
+	PermissionAnswerRead   Permission = "answer:read"
+	PermissionAnswerUpdate Permission = "answer:update"
+	PermissionAnswerDel    Permission = "answer:del"
 )
 
 // RolePermissions - разрешения для каждой роли
@@ -13,10 +50,41 @@ var RolePermissions = map[UserRole][]Permission{
 		// Студент не имеет специальных разрешений по умолчанию
 	},
 	RoleTeacher: {
-		PermissionUserListRead,
+		PermissionCourseInfoWrite,
+		PermissionCourseTestList,
+		PermissionCourseTestRead,
+		PermissionCourseTestWrite,
+		PermissionCourseTestAdd,
+		PermissionCourseTestDel,
+		PermissionCourseUserList,
+		PermissionCourseUserAdd,
+		PermissionCourseUserDel,
+		PermissionCourseDel,
+		PermissionQuestListRead,
+		PermissionQuestRead,
+		PermissionQuestUpdate,
+		PermissionQuestCreate,
+		PermissionQuestDel,
+		PermissionTestQuestDel,
+		PermissionTestQuestAdd,
+		PermissionTestQuestUpdate,
+		PermissionTestAnswerRead,
 	},
 	RoleAdmin: {
 		PermissionUserListRead,
+		PermissionUserFullNameWrite,
+		PermissionUserDataRead,
+		PermissionUserRolesRead,
+		PermissionUserRolesWrite,
+		PermissionUserBlockRead,
+		PermissionUserBlockWrite,
+		PermissionCourseAdd,
+		PermissionCourseDel,
+		PermissionQuestListRead,
+		PermissionQuestRead,
+		PermissionQuestUpdate,
+		PermissionQuestCreate,
+		PermissionQuestDel,
 	},
 }
 
