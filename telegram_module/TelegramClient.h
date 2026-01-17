@@ -1,20 +1,19 @@
 #pragma once
 
 #include <string>
-#include <vector>
+#include "BotLogicClient.h"
 
 class TelegramClient {
 public:
-    struct IncomingMessage {
-        long chatId;
-        std::string text;
-    };
+    explicit TelegramClient(const std::string& token);
+    ~TelegramClient();                 // ← ВАЖНО: объявил деструктор
 
-    TelegramClient(const std::string& token);
-
-    std::vector<IncomingMessage> getUpdates();
-    void sendMessage(long chatId, const std::string& text);
+    void poll();
 
 private:
     std::string token;
+    long last_update_id = 0;
+    BotLogicClient logic;
+
+    void sendMessage(long chatId, const std::string& text);
 };

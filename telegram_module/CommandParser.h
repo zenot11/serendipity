@@ -5,6 +5,7 @@ enum class Command {
     START,
     STATUS,
     HELP,
+    PING,
     UNKNOWN
 };
 

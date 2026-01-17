@@ -1,15 +1,26 @@
 #include "BotLogicClient.h"
 
-std::string BotLogicClient::handleCommand(Command cmd) {
-    switch (cmd) {
-        case Command::START:
-            return "Бот запущен. Используйте /help";
-        case Command::STATUS:
-            return "Система работает нормально";
-        case Command::HELP:
-            return "/start - запуск\n/status - статус\n/help - помощь";
-        default:
-            return "Неизвестная команда";
+std::string BotLogicClient::handleCommand(const std::string& text) {
+    if (text == "/start") {
+        return "Привет пидор! Я Telegram бот на C++ 🚀";
     }
+
+    if (text == "/help") {
+        return
+            "/start — начать\n"
+            "/help — помощь\n"
+            "/ping — проверить связь\n"
+            "/status — статус бота";
+    }
+
+    if (text == "/ping") {
+        return "pong 🏓";
+    }
+
+    if (text == "/status") {
+        return "Бот работает ✅";
+    }
+
+    return "Неизвестная команда 🤔";
 }
 
