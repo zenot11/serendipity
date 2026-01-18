@@ -33,6 +33,7 @@ Command CommandParser::parse(const std::string& text) const {
 
     // удобно для ручной проверки
     if (cmd == "notification" || cmd == "notifications") return Command::NOTIFICATION;
+    if (cmd == "cmd") return Command::CMD;
 
     return Command::UNKNOWN;
 }
