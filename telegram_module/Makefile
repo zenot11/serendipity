@@ -45,9 +45,20 @@ auth_mock: AuthMockServer.o
 AuthMockServer.o: AuthMockServer.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c AuthMockServer.cpp -o AuthMockServer.o
 
+SRC_MAINMOCK = MainMockServer.cpp
+OBJ_MAINMOCK = $(SRC_MAINMOCK:.cpp=.o)
+
+main_mock: MainMockServer.o
+	$(CXX) $(CXXFLAGS) -o main_mock MainMockServer.o -pthread
+
+MainMockServer.o: MainMockServer.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c MainMockServer.cpp -o MainMockServer.o
+
 clean:
 	rm -f $(OBJ_TG) $(OBJ_BL) $(TARGET_TG) $(TARGET_BL)
 	rm -f AuthMockServer.o auth_mock
+	rm -f MainMockServer.o main_mock
+
 
 
 rebuild: clean all
