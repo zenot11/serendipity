@@ -18,4 +18,5 @@ telegram_module/*.dSYM/
 telegram_module/auth_mock
 telegram_module/bot_logic
 telegram_module/telegram_bot
+telegram_module/main_mock
 
