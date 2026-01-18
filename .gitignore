@@ -12,3 +12,10 @@ telegram_bot
 # Optional: build directories
 build/
 
+# telegram_module build artifacts
+telegram_module/*.o
+telegram_module/*.dSYM/
+telegram_module/auth_mock
+telegram_module/bot_logic
+telegram_module/telegram_bot
+
