@@ -1,18 +1,16 @@
 #include "TelegramClient.h"
 
 #include <curl/curl.h>
+#include <chrono>
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <thread>
-#include <chrono>
 
 #include "json.hpp"
 
 using json = nlohmann::json;
 
-// -----------------------------
-// write callback для getUpdates
-// -----------------------------
 static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     size_t totalSize = size * nmemb;
     std::string* str = static_cast<std::string*>(userp);
@@ -20,25 +18,60 @@ static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* use
     return totalSize;
 }
 
-// -----------------------------
-// ctor
-// -----------------------------
+static int getenv_int(const char* key, int def) {
+    if (const char* v = std::getenv(key)) {
+        try { return std::stoi(v); } catch (...) { return def; }
+    }
+    return def;
+}
+
 TelegramClient::TelegramClient(const std::string& token)
     : token(token), last_update_id(0) {
     curl_global_init(CURL_GLOBAL_DEFAULT);
 }
 
-// -----------------------------
-// dtor
-// -----------------------------
 TelegramClient::~TelegramClient() {
     curl_global_cleanup();
 }
 
-// -----------------------------
-// основной polling
-// -----------------------------
+void TelegramClient::startCronThreads() {
+    std::call_once(cron_once, [&]() {
+        const int loginInterval = getenv_int("LOGIN_CHECK_INTERVAL", 10);
+        const int notifInterval = getenv_int("NOTIFY_CHECK_INTERVAL", 30);
+
+        // Cron: login_check
+        std::thread([this, loginInterval]() {
+            while (true) {
+                try {
+                    auto msgs = logic.cronLoginCheck();
+                    for (const auto& m : msgs) {
+                        sendMessage(m.chat_id, m.text);
+                    }
+                } catch (...) {
+                }
+                std::this_thread::sleep_for(std::chrono::seconds(loginInterval));
+            }
+        }).detach();
+
+        // Cron: notifications_check
+        std::thread([this, notifInterval]() {
+            while (true) {
+                try {
+                    auto msgs = logic.cronNotificationsCheck();
+                    for (const auto& m : msgs) {
+                        sendMessage(m.chat_id, m.text);
+                    }
+                } catch (...) {
+                }
+                std::this_thread::sleep_for(std::chrono::seconds(notifInterval));
+            }
+        }).detach();
+    });
+}
+
 void TelegramClient::poll() {
+    startCronThreads();
+
     while (true) {
         std::string response;
         CURL* curl = curl_easy_init();
@@ -50,10 +83,8 @@ void TelegramClient::poll() {
         }
 
         std::ostringstream url;
-        url << "https://api.telegram.org/bot"
-            << token
-            << "/getUpdates?timeout=30&offset="
-            << last_update_id;
+        url << "https://api.telegram.org/bot" << token
+            << "/getUpdates?timeout=30&offset=" << last_update_id;
 
         curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
@@ -64,41 +95,46 @@ void TelegramClient::poll() {
         curl_easy_cleanup(curl);
 
         if (res != CURLE_OK) {
-            std::cerr << "[poll ERROR] "
-                      << curl_easy_strerror(res) << std::endl;
+            std::cerr << "[poll ERROR] " << curl_easy_strerror(res) << std::endl;
             std::this_thread::sleep_for(std::chrono::seconds(1));
             continue;
         }
 
-        if (response.empty()) {
-            continue;
-        }
+        if (response.empty()) continue;
 
         try {
             auto data = json::parse(response);
-
-            if (!data.contains("result")) {
-                continue;
-            }
+            if (!data.contains("result")) continue;
 
             for (const auto& update : data["result"]) {
-                last_update_id = update["update_id"].get<long>() + 1;
+                last_update_id = update["update_id"].get<long long>() + 1;
 
                 if (!update.contains("message")) continue;
-                if (!update["message"].contains("text")) continue;
-
                 const auto& msg = update["message"];
-                long chatId = msg["chat"]["id"].get<long>();
+                if (!msg.contains("text")) continue;
+
+                long long chatId = msg["chat"]["id"].get<long long>();
                 std::string text = msg["text"].get<std::string>();
 
-                std::cout << "[recv] " << text << std::endl;
-
-                std::string reply = logic.handleCommand(text);
-                if (reply.empty()) {
-                    reply = "Я получил: " + text;
+                // ВАЖНО по task_flow:
+                // Telegram Client обязан сам отфильтровать неизвестные команды
+                // и ответить: "Нет такой команды".
+                Command cmd = parser.parse(text);
+                if (!CommandParser::isSupported(cmd)) {
+                    sendMessage(chatId, "Нет такой команды");
+                    continue;
                 }
 
-                sendMessage(chatId, reply);
+                // Известная команда -> пересылаем в Bot Logic
+                auto replies = logic.handleCommand(chatId, text);
+                if (replies.empty()) {
+                    sendMessage(chatId, "Команда принята.");
+                    continue;
+                }
+
+                for (const auto& r : replies) {
+                    sendMessage(r.chat_id, r.text);
+                }
             }
 
         } catch (const json::parse_error& e) {
@@ -108,14 +144,11 @@ void TelegramClient::poll() {
     }
 }
 
-// -----------------------------
-// sendMessage (БЕЗ парсинга!)
-// -----------------------------
-void TelegramClient::sendMessage(long chatId, const std::string& text) {
+void TelegramClient::sendMessage(long long chatId, const std::string& text) {
     CURL* curl = curl_easy_init();
     if (!curl) return;
 
-    char* escaped = curl_easy_escape(curl, text.c_str(), text.length());
+    char* escaped = curl_easy_escape(curl, text.c_str(), (int)text.length());
 
     std::string url =
         "https://api.telegram.org/bot" + token +
@@ -124,15 +157,11 @@ void TelegramClient::sendMessage(long chatId, const std::string& text) {
 
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-
-    // ❗ ВАЖНО: ответ нам не нужен
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, nullptr);
 
     CURLcode res = curl_easy_perform(curl);
-
     if (res != CURLE_OK) {
-        std::cerr << "[sendMessage ERROR] "
-                  << curl_easy_strerror(res) << std::endl;
+        std::cerr << "[sendMessage ERROR] " << curl_easy_strerror(res) << std::endl;
     }
 
     if (escaped) curl_free(escaped);
