@@ -91,7 +91,14 @@ void TelegramClient::sendMessage(long long chatId, const std::string& text) {
 
     // FIX: "HTTP2 framing layer" -> форсим HTTP/1.1
     curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+
+#ifdef CURLOPT_SSL_ENABLE_ALPN
+    // VPN/прокси иногда ломают ALPN/HTTP2 negotiation
     curl_easy_setopt(curl, CURLOPT_SSL_ENABLE_ALPN, 0L);
+#endif
+
+    // чтобы libcurl не использовал сигналы (важно в многопоточке)
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
 
     curl_easy_setopt(curl, CURLOPT_POST, 1L);
     std::string payload = body.dump();
@@ -135,7 +142,11 @@ void TelegramClient::poll() {
 
         // FIX: "HTTP2 framing layer" -> форсим HTTP/1.1
         curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+
+#ifdef CURLOPT_SSL_ENABLE_ALPN
+        // VPN/прокси иногда ломают ALPN/HTTP2 negotiation
         curl_easy_setopt(curl, CURLOPT_SSL_ENABLE_ALPN, 0L);
+#endif
 
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
@@ -197,13 +208,9 @@ void TelegramClient::poll() {
                 // - неизвестные -> "Нет такой команды"
                 // - известные и обычный текст -> отправляем в bot_logic как есть
 
-                if (!text.empty() && text[0] == '/') {
-                    Command c = parser.parse(text);
-                    if (!parser.isSupported(c)) {
-                        sendMessage(chatId, "Нет такой команды");
-                        continue;
-                    }
-                }
+                // Не фильтруем неизвестные команды здесь.
+                // Любой текст (включая /что-то) отправляем в bot_logic: там решат,
+                // это локальная команда (/login, /logout, /notification) или надо форвардить в Main.
 
                 auto answers = logic.handleCommand(chatId, text);
                 for (auto& a : answers) {
