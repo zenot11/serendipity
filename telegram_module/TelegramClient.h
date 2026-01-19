@@ -1,26 +1,43 @@
 #pragma once
 
-#include <string>
+#include <atomic>
 #include <mutex>
+#include <string>
+#include <thread>
 
 #include "BotLogicClient.h"
 #include "CommandParser.h"
 
 class TelegramClient {
 public:
-    explicit TelegramClient(const std::string& token);
+    explicit TelegramClient(const std::string& botToken);
     ~TelegramClient();
 
-    void poll();
+    void poll();   // основной цикл
+    void stop();   // корректная остановка
+
+private:
+    void startCronThreadsOnce();
+    void cronLoginLoop();
+    void cronNotificationsLoop();
+
+    void sendMessage(long long chatId, const std::string& text);
 
 private:
     std::string token;
-    long long last_update_id = 0;
+    std::string apiBase; // https://api.telegram.org/bot<TOKEN>
+
+    long long last_update_id{0};
+
+    std::atomic<bool> running{false};
+    std::atomic<bool> cron_running{false};
+
+    std::thread cronLoginThread;
+    std::thread cronNotificationsThread;
+
+    // на всякий случай сериализуем sendMessage (можно убрать, но так надёжнее)
+    std::mutex send_m;
 
     BotLogicClient logic;
     CommandParser parser;
-    std::once_flag cron_once;
-
-    void startCronThreads();
-    void sendMessage(long long chatId, const std::string& text);
 };
