@@ -6,7 +6,6 @@
 #include <thread>
 
 #include "BotLogicClient.h"
-#include "CommandParser.h"
 
 class TelegramClient {
 public:
@@ -39,5 +38,4 @@ private:
     std::mutex send_m;
 
     BotLogicClient logic;
-    CommandParser parser;
 };
