@@ -1,0 +1,17 @@
+{{define "index_authorized.html"}}
+{{template "layout" .}}
+{{end}}
+
+{{define "title"}}Личный кабинет{{end}}
+
+{{define "content"}}
+<h1>Вы авторизованы :3</h1>
+
+<p>Access token: <b>{{.AccessToken}}</b></p>
+
+<div class="buttons">
+    <a class="btn" href="/actions">Действия</a>
+    <a class="btn" href="/logout">Выйти</a>
+    <a class="btn" href="/logout?all=true">Выйти на всех устройствах</a>
+</div>
+{{end}}

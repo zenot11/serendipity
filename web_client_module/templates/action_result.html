@@ -1,0 +1,14 @@
+{{define "action_result.html"}}
+{{template "layout" .}}
+{{end}}
+
+{{define "title"}}Результат{{end}}
+
+{{define "content"}}
+<h1>{{.Title}}</h1>
+<p><b>Status:</b> {{.Status}}</p>
+
+<pre class="pre">{{.Body}}</pre>
+
+<a class="btn" href="/actions">Назад</a>
+{{end}}

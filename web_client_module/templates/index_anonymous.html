@@ -1,0 +1,20 @@
+{{define "index_anonymous.html"}}
+{{template "layout" .}}
+{{end}}
+
+{{define "title"}}Ожидание входа{{end}}
+
+{{define "content"}}
+<h1>Авторизация выполняется...</h1>
+<p>ожидается подтверждение входа</p>
+
+<div class="buttons">
+    <a class="btn" href="/">Обновить страницу</a>
+    <a class="btn" href="/login?type=github">Заново GitHub</a>
+    <a class="btn" href="/login?type=yandex">Заново Яндекс</a>
+    <a class="btn" href="/login?type=code">Заново Код</a>
+</div>
+
+<hr>
+<p class="muted">login_token: {{.LoginToken}}</p>
+{{end}}
