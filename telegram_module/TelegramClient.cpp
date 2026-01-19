@@ -91,6 +91,7 @@ void TelegramClient::sendMessage(long long chatId, const std::string& text) {
 
     // FIX: "HTTP2 framing layer" -> форсим HTTP/1.1
     curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+    curl_easy_setopt(curl, CURLOPT_SSL_ENABLE_ALPN, 0L);
 
     curl_easy_setopt(curl, CURLOPT_POST, 1L);
     std::string payload = body.dump();
@@ -113,6 +114,7 @@ void TelegramClient::sendMessage(long long chatId, const std::string& text) {
 void TelegramClient::poll() {
     running = true;
     startCronThreadsOnce();
+    std::cout << "[telegram_bot] Polling started. Waiting for updates..." << std::endl;
 
     while (running) {
         CURL* curl = curl_easy_init();
@@ -133,13 +135,23 @@ void TelegramClient::poll() {
 
         // FIX: "HTTP2 framing layer" -> форсим HTTP/1.1
         curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        curl_easy_setopt(curl, CURLOPT_SSL_ENABLE_ALPN, 0L);
 
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
         curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 40L);
+        // long-poll может резаться VPN/прокси; держим общий таймаут чуть больше server-side timeout=25
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 70L);
+        // чтобы libcurl не использовал сигналы (важно в многопоточке)
+        curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
 
         CURLcode res = curl_easy_perform(curl);
+        if (res == CURLE_OPERATION_TIMEDOUT) {
+            // Для long-poll это нормальная ситуация (особенно с VPN): просто повторяем цикл без спама в лог.
+            curl_easy_cleanup(curl);
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            continue;
+        }
         if (res != CURLE_OK) {
             std::cerr << "[poll ERROR] " << curl_easy_strerror(res) << "\n";
             curl_easy_cleanup(curl);
@@ -155,6 +167,16 @@ void TelegramClient::poll() {
                 continue;
             }
 
+            static int idleTicks = 0;
+            if (j["result"].empty()) {
+                // Чтобы было видно, что бот жив и крутит polling
+                if (++idleTicks % 20 == 0) {
+                    std::cout << "[telegram_bot] still running..." << std::endl;
+                }
+            } else {
+                idleTicks = 0;
+            }
+
             for (auto& upd : j["result"]) {
                 long long update_id = upd.value("update_id", 0LL);
                 if (update_id > last_update_id) last_update_id = update_id;
@@ -166,6 +188,7 @@ void TelegramClient::poll() {
                 long long chatId = msg["chat"]["id"].get<long long>();
                 std::string text = msg.value("text", "");
                 if (text.empty()) continue;
+                std::cout << "[telegram_bot] incoming from chat=" << chatId << ": " << text << std::endl;
 
                 // ВАЖНО: CommandParser у тебя возвращает enum, а не объект.
                 // Поэтому никакого cmd.raw / cmd.name.
