@@ -20,3 +20,7 @@ telegram_module/bot_logic
 telegram_module/telegram_bot
 telegram_module/main_mock
 
+
+# telegram_module main mock build artifacts
+telegram_module/MainMockServer.o
+telegram_module/main_mock

@@ -2,8 +2,10 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <mutex>
 #include <chrono>
+#include <random>
 
 #include "httplib.h"
 #include "json.hpp"
@@ -27,6 +29,20 @@ static std::string mk_refresh(const std::string& state) {
     return "REFRESH_" + s;
 }
 
+// Небольшой генератор, чтобы "обновлённые" токены отличались от исходных.
+static std::string random_hex_token(size_t bytes = 8) {
+    std::random_device rd;
+    static const char* hex = "0123456789abcdef";
+    std::string out;
+    out.reserve(bytes * 2);
+    for (size_t i = 0; i < bytes; ++i) {
+        unsigned int b = rd() & 0xFF;
+        out.push_back(hex[(b >> 4) & 0xF]);
+        out.push_back(hex[b & 0xF]);
+    }
+    return out;
+}
+
 int main() {
     const int port = std::stoi(getenv_or("AUTH_PORT", "8081"));
     const int confirm_sec = std::stoi(getenv_or("AUTH_CONFIRM_SEC", "15"));
@@ -35,6 +51,8 @@ int main() {
 
     // Храним, когда "стартовали логин" по state/login_token
     std::unordered_map<std::string, std::chrono::steady_clock::time_point> started_at;
+    // Отозванные refresh-токены (для /logout all=true и для демонстрации протухания)
+    std::unordered_set<std::string> revoked_refresh;
     std::mutex mx;
 
     auto mark_started = [&](const std::string& state) {
@@ -62,7 +80,6 @@ int main() {
         }
 
         // "Подтверждено" — выдаём токены
-        // (и можно удалить state, чтобы дальше считалось завершенным)
         {
             std::lock_guard<std::mutex> lk(mx);
             started_at.erase(state);
@@ -87,7 +104,7 @@ int main() {
     });
 
     // =========================================================
-    // СОВМЕСТИМО С BotLogicServer.cpp (там GET /login и GET /check)
+    // СОВМЕСТИМО С BotLogic (там GET /login и GET /check)
     // =========================================================
 
     // GET /login?type=github&state=....
@@ -107,7 +124,6 @@ int main() {
 
         mark_started(state);
 
-        // BotLogic просто "перешлет пользователю" body как текст.
         std::string msg =
             "ОК. (mock) Авторизация запущена для type=" + type +
             ". Подтверждение через ~" + std::to_string(confirm_sec) + " секунд.";
@@ -133,7 +149,7 @@ int main() {
     });
 
     // =========================================================
-    // ТВОИ СТАРЫЕ ЭНДПОИНТЫ (для ручных тестов)
+    // POST API под BotLogic (auth/start, auth/check, refresh, logout)
     // =========================================================
 
     // POST /auth/start  { "login_token": "...", "type":"github" }
@@ -199,6 +215,67 @@ int main() {
         }
 
         res.set_content(R"({"authorized":false,"status":"pending"})", "application/json");
+    });
+
+    // POST /refresh
+    // Body: {"refresh_token":"..."}
+    // Успех: 200 {"access_token":"ACCESSR_...","refresh_token":"REFRESHR_..."}
+    // Ошибка: 401
+    app.Post("/refresh", [&](const httplib::Request& req, httplib::Response& res) {
+        json in;
+        try { in = json::parse(req.body); }
+        catch (...) {
+            res.status = 400;
+            res.set_content(R"({"error":"bad json"})", "application/json");
+            return;
+        }
+
+        const std::string refresh = in.value("refresh_token", "");
+        if (refresh.empty()) {
+            res.status = 400;
+            res.set_content(R"({"error":"refresh_token required"})", "application/json");
+            return;
+        }
+
+        {
+            std::lock_guard<std::mutex> lk(mx);
+            if (revoked_refresh.count(refresh)) {
+                res.status = 401;
+                res.set_content(R"({"error":"unauthorized"})", "application/json");
+                return;
+            }
+        }
+
+        if (refresh.rfind("REFRESH_", 0) != 0 && refresh.rfind("REFRESHR_", 0) != 0) {
+            res.status = 401;
+            res.set_content(R"({"error":"unauthorized"})", "application/json");
+            return;
+        }
+
+        const std::string suffix = random_hex_token(8);
+        json out = {
+            {"access_token", "ACCESSR_" + suffix},
+            {"refresh_token", "REFRESHR_" + suffix}
+        };
+        res.set_content(out.dump(), "application/json");
+    });
+
+    // POST /logout
+    // Body: {"refresh_token":"..."}
+    app.Post("/logout", [&](const httplib::Request& req, httplib::Response& res) {
+        json in;
+        try { in = json::parse(req.body); }
+        catch (...) {
+            res.status = 400;
+            res.set_content(R"({"error":"bad json"})", "application/json");
+            return;
+        }
+        const std::string refresh = in.value("refresh_token", "");
+        if (!refresh.empty()) {
+            std::lock_guard<std::mutex> lk(mx);
+            revoked_refresh.insert(refresh);
+        }
+        res.set_content(R"({"ok":true})", "application/json");
     });
 
     std::cout << "Auth Mock listening on 0.0.0.0:" << port << std::endl;
