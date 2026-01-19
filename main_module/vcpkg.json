@@ -1,0 +1,12 @@
+{
+  "name": "my-crow-app",
+  "version": "0.1.0",
+  "dependencies": [
+    "crow",
+    "boost-asio",
+    "openssl",
+    "jwt-cpp",
+    "cpr",
+    "picojson" 
+  ]
+}
