@@ -1,3 +1,26 @@
 # macOS system files
 .DS_Store
 **/.DS_Store
+# Build artifacts
+*.o
+telegram_bot
+
+# Optional: binaries
+*.out
+*.exe
+
+# Optional: build directories
+build/
+
+# telegram_module build artifacts
+telegram_module/*.o
+telegram_module/*.dSYM/
+telegram_module/auth_mock
+telegram_module/bot_logic
+telegram_module/telegram_bot
+telegram_module/main_mock
+
+
+# telegram_module main mock build artifacts
+telegram_module/MainMockServer.o
+telegram_module/main_mock
