@@ -5,14 +5,10 @@
 {{define "title"}}Вход{{end}}
 
 {{define "content"}}
-<h1>Вы не авторизованы</h1>
+<h1>Вы не авторизованы :c</h1>
 <p>Выберите способ входа:</p>
 
-<div class="buttons">
-    <a class="btn" href="/login?type=github">GitHub</a>
-    <a class="btn" href="/login?type=yandex">Яндекс ID</a>
-    <a class="btn" href="/login?type=code">Код</a>
-</div>
-
-<p class="muted">Если у вас нет Cookie или записи в Redis — вы unknown</p>
+<a class="btn" href="/login?type=github">Войти через GitHub</a><br>
+<a class="btn" href="/login?type=yandex">Войти через Яндекс</a><br>
+<a class="btn" href="/login?type=code">Войти по коду</a>
 {{end}}

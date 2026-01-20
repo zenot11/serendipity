@@ -2,19 +2,14 @@
 {{template "layout" .}}
 {{end}}
 
-{{define "title"}}Ожидание входа{{end}}
+{{define "title"}}Ожидание входа ^_^{{end}}
 
 {{define "content"}}
-<h1>Авторизация выполняется...</h1>
-<p>ожидается подтверждение входа</p>
+<h1>Ожидаем подтверждение входа...</h1>
+<p class="small">Токен входа: {{.LoginToken}}</p>
 
-<div class="buttons">
-    <a class="btn" href="/">Обновить страницу</a>
-    <a class="btn" href="/login?type=github">Заново GitHub</a>
-    <a class="btn" href="/login?type=yandex">Заново Яндекс</a>
-    <a class="btn" href="/login?type=code">Заново Код</a>
-</div>
+<p>Если вы входили через код — введите его в другом устройстве.</p>
 
-<hr>
-<p class="muted">login_token: {{.LoginToken}}</p>
+<a class="btn" href="/">Я ввёл код, обновить</a>
+<a class="btn" href="/logout">Отмена</a>
 {{end}}

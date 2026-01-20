@@ -15,7 +15,7 @@ type ctxKey string
 
 const (
  	ctxSessionID ctxKey = "session_id"
- 	ctxRecord ctxKey = "record"
+ 	ctxRecord    ctxKey = "record"
 )
 
 func SessionID(r *http.Request) string {
@@ -36,14 +36,15 @@ func Record(r *http.Request) *session.Record {
 
 func SessionFlow(next http.Handler, store *session.RedisStore, auth *api.AuthClient, cfg *config.Config) http.Handler {
  	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
   		if len(r.URL.Path) >= 8 && r.URL.Path[:8] == "/static/" {
    			next.ServeHTTP(w, r)
    			return
-  		}		
+  		}
 
-		ctx := r.Context()
+  		ctx := r.Context()
 
-  		//читаем куки
+
   		c, err := r.Cookie(cfg.CookieName)
   		if err != nil || c.Value == "" {
    			if r.URL.Path == "/" || r.URL.Path == "/login" {
@@ -56,18 +57,18 @@ func SessionFlow(next http.Handler, store *session.RedisStore, auth *api.AuthCli
 
   		sid := c.Value
 
-  		// читаем редис
+
   		rec, ok, err := store.Get(ctx, sid)
   		if err != nil || !ok {
-   		if r.URL.Path == "/" || r.URL.Path == "/login" {
-    		next.ServeHTTP(w, r)
-    		return
-   		}
-   		http.Redirect(w, r, "/", http.StatusSeeOther)
-   		return
-		}
+   			if r.URL.Path == "/" || r.URL.Path == "/login" {
+    			next.ServeHTTP(w, r)
+    			return
+   			}
+   			http.Redirect(w, r, "/", http.StatusSeeOther)
+   			return
+  		}
 
-  		//проверяем авторизацию
+
   		if rec.Status == session.StatusAnonymous {
    			if r.URL.Path == "/login" {
     			ctx = context.WithValue(ctx, ctxSessionID, sid)
@@ -76,45 +77,34 @@ func SessionFlow(next http.Handler, store *session.RedisStore, auth *api.AuthCli
     			return
    			}
 
-   			//проверка токена входа
-   			if rec.LoginToken == "" {
-    			_ = store.Delete(context.Background(), sid)
-    			http.Redirect(w, r, "/", http.StatusSeeOther)
-    			return
-   			}
+
 
    			check, err := auth.CheckLogin(rec.LoginToken)
    			if err != nil {
+
+    			_ = store.Delete(context.Background(), sid)
     			http.Redirect(w, r, "/", http.StatusSeeOther)
     			return
    			}
 
-   			switch check.Status {
-   				case "pending":
-    			http.Redirect(w, r, "/", http.StatusSeeOther)
-    			return
-
-   				case "denied":
-    			_ = store.Delete(context.Background(), sid)
-    			http.Redirect(w, r, "/", http.StatusSeeOther)
-    			return
-
-   				case "success":
-    
+   			if check.Status == "success" {
     			rec.Status = session.StatusAuthorized
     			rec.AccessToken = check.AccessToken
     			rec.RefreshToken = check.RefreshToken
     			rec.LoginToken = ""
 
     			_ = store.Set(context.Background(), sid, rec)
-   				default:
+   			} else if check.Status == "denied" {
     			_ = store.Delete(context.Background(), sid)
+    			http.Redirect(w, r, "/", http.StatusSeeOther)
+    			return
+   			} else {
     			http.Redirect(w, r, "/", http.StatusSeeOther)
     			return
    			}
   		}
 
-  		//autorized
+
   		if rec.Status == session.StatusAuthorized && r.URL.Path == "/login" {
    			http.Redirect(w, r, "/", http.StatusSeeOther)
    			return
@@ -129,13 +119,13 @@ func SessionFlow(next http.Handler, store *session.RedisStore, auth *api.AuthCli
 
 func SetSessionCookie(w http.ResponseWriter, cfg *config.Config, sid string) {
  	http.SetCookie(w, &http.Cookie{
-  		Name: cfg.CookieName,
-  		Value: sid,
-  		Path: "/",
+  		Name:     cfg.CookieName,
+  		Value:    sid,
+  		Path:     "/",
   		HttpOnly: true,
   		SameSite: http.SameSiteLaxMode,
-  		Expires: time.Now().Add(24 * time.Hour),
-  		Secure: !cfg.DevMode,
+  		Expires:  time.Now().Add(24 * time.Hour),
+  		Secure:   !cfg.DevMode,
  	})
 }
 

@@ -2,13 +2,12 @@
 {{template "layout" .}}
 {{end}}
 
-{{define "title"}}Код входа{{end}}
+{{define "title"}}Код авторизации{{end}}
 
 {{define "content"}}
-<h1>Код входа</h1>
+<h1>Код для входа</h1>
 
-<p>Введите этот код на устройстве, где вы уже авторизованы:</p>
-<div class="code">{{.Code}}</div>
+<p>Ваш код: <b>{{.Code}}</b></p>
 
-<a class="btn" href="/">Я ввёл код, обновить</a>
+<a class="btn" href="/">На главную</a>
 {{end}}

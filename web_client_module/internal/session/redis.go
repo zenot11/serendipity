@@ -12,14 +12,14 @@ import (
 type Status string
 
 const (
-	StatusAnonymous Status = "anonymous"
- 	StatusAuthorized Status = "authorized"
+ 	StatusAnonymous  Status = "anonymous"
+ 	tatusAuthorized Status = "authorized"
 )
 
 type Record struct {
- 	Status Status json:"status"
- 	LoginToken string json:"login_token,omitempty"
- 	AccessToken string json:"access_token,omitempty"
+ 	Status       Status json:"status"
+ 	LoginToken   string json:"login_token,omitempty"
+ 	AccessToken  string json:"access_token,omitempty"
  	RefreshToken string json:"refresh_token,omitempty"
 }
 
@@ -30,9 +30,9 @@ type RedisStore struct {
 
 func NewRedisStore(addr, pass string, db int, ttl time.Duration) *RedisStore {
  	rdb := redis.NewClient(&redis.Options{
-  		Addr: addr,
+  		Addr:     addr,
   		Password: pass,
-  		DB: db,
+  		DB:       db,
  	})
  	return &RedisStore{rdb: rdb, ttl: ttl}
 }
@@ -43,15 +43,14 @@ func (s *RedisStore) Get(ctx context.Context, key string) (*Record, bool, error)
   		return nil, false, nil
  	}
  	if err != nil {
- 		return nil, false, err
+  		return nil, false, err
  	}
 
  	var rec Record
  	if err := json.Unmarshal([]byte(val), &rec); err != nil {
   		return nil, false, err
  	}
-
-	return &rec, true, nil
+ 	return &rec, true, nil
 }
 
 func (s *RedisStore) Set(ctx context.Context, key string, rec *Record) error {

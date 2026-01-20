@@ -5,39 +5,19 @@
 {{define "title"}}Действия{{end}}
 
 {{define "content"}}
-<h1>Действия системы</h1>
-
-<p>Эти кнопки отправляют запросы в  главный модуль</p>
+<h1>Действия (Demo)</h1>
+<p>Это тестовые запросы в главном модуле</p>
 
 {{range .Actions}}
-<form action="/actions/do" method="post" class="action-form">
+<form action="/actions/do" method="post" style="margin-bottom:10px;">
     <input type="hidden" name="method" value="{{.Method}}">
     <input type="hidden" name="path" value="{{.Path}}">
     <input type="hidden" name="body" value="{{.Body}}">
-    <button type="submit">{{.Title}}</button>
+    <button class="btn" type="submit">{{.Title}}</button>
 </form>
 {{end}}
 
-<hr>
 
-<h2>Свободный запрос</h2>
-<form action="/actions/do" method="post" class="free-form">
-    <label>Method</label>
-    <select name="method">
-    <option>GET</option>
-    <option>POST</option>
-    <option>PUT</option>
-    <option>DELETE</option>
-    </select>
-
-    <label>Path</label>
-    <input name="path" placeholder="/user/list" required>
-
-    <label>Body (JSON)</label>
-    <textarea name="body" placeholder='{"id":"123"}'></textarea>
-
-    <button type="submit">Отправить</button>
-</form>
 
 <a class="btn" href="/">Назад</a>
 {{end}}

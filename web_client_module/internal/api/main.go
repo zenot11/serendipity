@@ -26,17 +26,17 @@ func (m *MainClient) Do(method, path, accessToken string, body []byte) (int, str
  	if m.mock {
   		if path == "/demo/401" {
    			return 401, {"error":"token expired (demo)"}, nil
-  		}	
+  		}
   		if path == "/demo/403" {
    			return 403, {"error":"forbidden (demo)"}, nil
-  		}
-  		return 200, fmt.Sprintf(`{"ok":true,"method":"%s","path":"%s","token":"%s"}`, method, path, accessToken), nil
+		}
+  		return 200, fmt.Sprintf(`{"ok":true,"method":"%s","path":"%s"}`, method, path), nil
  	}
 
  	var reader io.Reader
  	if body != nil && len(body) > 0 {
   		reader = bytes.NewReader(body)
- 	
+ 	}
 
  	req, err := http.NewRequest(method, m.base+path, reader)
  	if err != nil {
@@ -54,5 +54,4 @@ func (m *MainClient) Do(method, path, accessToken string, body []byte) (int, str
 
  	b, _ := io.ReadAll(resp.Body)
  	return resp.StatusCode, string(b), nil
-	}
 }

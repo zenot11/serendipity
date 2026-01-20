@@ -1,3 +1,5 @@
 .vscode/
 .idea/
 *.exe
+*.log
+.DS_Store

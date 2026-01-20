@@ -1,4 +1,4 @@
-version: "3.9"
+
 
 services:
   redis:
@@ -16,6 +16,7 @@ services:
       - MOCK=true
       - COOKIE_NAME=session_id
       - REDIS_ADDR=redis:6379
+      - REDIS_PASSWORD=
       - REDIS_DB=0
       - SESSION_TTL_MIN=1440
       - AUTH_URL=http://auth:8081
