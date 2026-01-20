@@ -1,0 +1,14 @@
+{{define "index_unknown.html"}}
+{{template "layout" .}}
+{{end}}
+
+{{define "title"}}Вход{{end}}
+
+{{define "content"}}
+<h1>Вы не авторизованы :c</h1>
+<p>Выберите способ входа:</p>
+
+<a class="btn" href="/login?type=github">Войти через GitHub</a><br>
+<a class="btn" href="/login?type=yandex">Войти через Яндекс</a><br>
+<a class="btn" href="/login?type=code">Войти по коду</a>
+{{end}}

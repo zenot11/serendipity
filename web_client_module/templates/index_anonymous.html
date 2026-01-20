@@ -1,0 +1,15 @@
+{{define "index_anonymous.html"}}
+{{template "layout" .}}
+{{end}}
+
+{{define "title"}}Ожидание входа ^_^{{end}}
+
+{{define "content"}}
+<h1>Ожидаем подтверждение входа...</h1>
+<p class="small">Токен входа: {{.LoginToken}}</p>
+
+<p>Если вы входили через код — введите его в другом устройстве.</p>
+
+<a class="btn" href="/">Я ввёл код, обновить</a>
+<a class="btn" href="/logout">Отмена</a>
+{{end}}

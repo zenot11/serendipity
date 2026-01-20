@@ -1,0 +1,23 @@
+{{define "actions.html"}}
+{{template "layout" .}}
+{{end}}
+
+{{define "title"}}Действия{{end}}
+
+{{define "content"}}
+<h1>Действия (Demo)</h1>
+<p>Это тестовые запросы в главном модуле</p>
+
+{{range .Actions}}
+<form action="/actions/do" method="post" style="margin-bottom:10px;">
+    <input type="hidden" name="method" value="{{.Method}}">
+    <input type="hidden" name="path" value="{{.Path}}">
+    <input type="hidden" name="body" value="{{.Body}}">
+    <button class="btn" type="submit">{{.Title}}</button>
+</form>
+{{end}}
+
+
+
+<a class="btn" href="/">Назад</a>
+{{end}}

@@ -1,0 +1,13 @@
+{{define "auth_code.html"}}
+{{template "layout" .}}
+{{end}}
+
+{{define "title"}}Код авторизации{{end}}
+
+{{define "content"}}
+<h1>Код для входа</h1>
+
+<p>Ваш код: <b>{{.Code}}</b></p>
+
+<a class="btn" href="/">На главную</a>
+{{end}}

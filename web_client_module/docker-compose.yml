@@ -1,0 +1,35 @@
+
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  web-client:
+    build: .
+    container_name: web-client
+    environment:
+      - PORT=8080
+      - DEV_MODE=true
+      - MOCK=true
+      - COOKIE_NAME=session_id
+      - REDIS_ADDR=redis:6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
+      - SESSION_TTL_MIN=1440
+      - AUTH_URL=http://auth:8081
+      - MAIN_URL=http://main:8082
+    depends_on:
+      - redis
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web-client
