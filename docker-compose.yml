@@ -1,26 +1,84 @@
-version: "3.9"
 services:
- 
+  # -------- DBs --------
   postgres:
     image: postgres:15
-    ports:
-      - "5432:5432"
+    container_name: serendipity-postgres
     environment:
       POSTGRES_USER: core
       POSTGRES_PASSWORD: core
       POSTGRES_DB: core_db
+    ports:
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./main_module/db/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app_net
 
-  main_module:
-    build: ./main_module
+  mongo:
+    image: mongo:6
+    container_name: serendipity-mongo
     ports:
-      - "18080:18080"
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    networks:
+      - app_net
+
+  # -------- Backends --------
+  auth_module:
+    build:
+      context: ./auth_module
+      dockerfile: Dockerfile
+    container_name: serendipity-auth_module
+    environment:
+      PORT: "8081"
+      MONGO_URI: "mongodb://mongo:27017/auth_db"
+      # JWT_SECRET: "change_me"
+    depends_on:
+      - mongo
+    networks:
+      - app_net
+
+  main_module:
+    build:
+      context: ./main_module
+      dockerfile: dockerfile
+    container_name: serendipity-main_module
+    environment:
+      DB_CONNINFO: "postgresql://core:core@postgres:5432/core_db"
+      AUTH_BASE: "http://auth_module:8081"
     depends_on:
       - postgres
+      - auth_module
+    ports:
+      - "18080:18080"
+    networks:
+      - app_net
+
+  web_client:
+    build:
+      context: ./web_client_module
+      dockerfile: Dockerfile
+    container_name: serendipity-web_client
+    depends_on:
+      - main_module
+      - auth_module
+    networks:
+      - app_net
+
+  # -------- Gateway --------
+  nginx:
+    image: nginx:alpine
+    container_name: serendipity-nginx
+    depends_on:
+      - web_client
+      - main_module
+      - auth_module
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - app_net
 
@@ -29,3 +87,4 @@ networks:
 
 volumes:
   pgdata:
+  mongodata:
