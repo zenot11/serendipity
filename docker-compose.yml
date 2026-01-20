@@ -17,8 +17,6 @@ services:
 
   main_module:
     build: ./main_module
-    env_file:
-      - ./main_module/.env
     ports:
       - "18080:18080"
     depends_on:
